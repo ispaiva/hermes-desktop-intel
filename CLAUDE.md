@@ -9,7 +9,7 @@ Baixar o Hermes Desktop oficial (Nous Research), compilar a partir do fonte e ro
 Este diretório é um **wrapper**, não um checkout do upstream:
 
 - `build-intel.sh` — instala/atualiza tudo e compila o desktop; `--rebuild` só recompila.
-- `build-dmg.sh` — assina (ad-hoc) o app compilado e gera `dist/Hermes-<versão>-mac-x64.dmg` + `.sha256` para instalar em outros Macs Intel. Os `.dmg` são ignorados pelo git (~145 MB); distribuir via GitHub Releases ou similar.
+- `build-dmg.sh` — assina (ad-hoc) o app compilado e gera `dist/Hermes-<versão>-mac-x64.dmg` + `.sha256` para instalar em outros Macs Intel. Os `.dmg` são ignorados pelo git (~145 MB) e publicados em GitHub Releases: https://github.com/ispaiva/hermes-desktop-intel/releases (tag = versão do app desktop, ex. `v0.17.6`; `gh release create vX.Y.Z dist/*.dmg dist/*.sha256`).
 - `hermes-agent/` — symlink para `~/.hermes/hermes-agent`, o checkout real de `NousResearch/hermes-agent` (branch `main`, `--depth 1`).
 
 **Nunca** apontar `HERMES_INSTALL_DIR` para este diretório: o instalador faz `rm -rf "$INSTALL_DIR"` quando um clone falha.
