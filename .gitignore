@@ -1,0 +1,3 @@
+# symlink local para ~/.hermes/hermes-agent (caminho absoluto, específico deste host)
+hermes-agent
+.DS_Store
