@@ -8,7 +8,7 @@ Baixar o Hermes Desktop oficial (Nous Research), compilar a partir do fonte e ro
 
 Este diretório é um **wrapper**, não um checkout do upstream:
 
-- `build-intel.sh` — instala/atualiza tudo e compila o desktop; `--rebuild` só recompila.
+- `build-intel.sh` — instala/atualiza tudo e compila o desktop; `--rebuild` recompila, aplica a assinatura ad-hoc e substitui a cópia em `/Applications/Hermes.app` (fecha o app se estiver aberto).
 - `build-dmg.sh` — assina (ad-hoc) o app compilado e gera `dist/Hermes-<versão>-mac-x64.dmg` + `.sha256` para instalar em outros Macs Intel. Os `.dmg` são ignorados pelo git (~145 MB) e publicados em GitHub Releases: https://github.com/ispaiva/hermes-desktop-intel/releases (tag = versão do app desktop, ex. `v0.17.6`; `gh release create vX.Y.Z dist/*.dmg dist/*.sha256`).
 - `hermes-agent/` — symlink para `~/.hermes/hermes-agent`, o checkout real de `NousResearch/hermes-agent` (branch `main`, `--depth 1`).
 
@@ -21,6 +21,7 @@ Este diretório é um **wrapper**, não um checkout do upstream:
 | `~/.hermes/hermes-agent/` | fonte (Python + `apps/desktop` Electron) |
 | `~/.hermes/hermes-agent/venv/` | venv Python (uv) |
 | `~/.hermes/hermes-agent/apps/desktop/release/mac/Hermes.app` | app x64 compilado (`release/mac-arm64/` seria arm64) |
+| `/Applications/Hermes.app` | **cópia** do app acima (não symlink); `hermes update` não a atualiza — use `./build-intel.sh --rebuild` |
 | `~/.hermes/bin/uv`, `~/.hermes/node/` | uv e Node 26 x64 gerenciados pelo instalador (não usa o nvm do usuário) |
 | `~/.hermes/` | config, sessões, skills, logs (`HERMES_HOME`) |
 
@@ -28,7 +29,7 @@ Este diretório é um **wrapper**, não um checkout do upstream:
 
 ```bash
 ./build-intel.sh               # instalação completa + build do desktop
-./build-intel.sh --rebuild     # recompilar só o desktop
+./build-intel.sh --rebuild     # recompilar o desktop + atualizar /Applications
 hermes desktop                 # compila (se preciso) e abre o app
 hermes update                  # atualiza checkout + recompila do fonte
 hermes setup                   # configurar provider/API key (pulado no install: --skip-setup)
