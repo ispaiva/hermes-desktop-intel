@@ -9,7 +9,7 @@ Baixar o Hermes Desktop oficial (Nous Research), compilar a partir do fonte e ro
 Este diretório é um **wrapper**, não um checkout do upstream:
 
 - `build-intel.sh` — instala/atualiza tudo e compila o desktop; `--rebuild` recompila, aplica a assinatura ad-hoc e substitui a cópia em `/Applications/Hermes.app` (fecha o app se estiver aberto).
-- `build-dmg.sh` — assina (ad-hoc) o app compilado e gera `dist/Hermes-<versão>-mac-x64.dmg` + `.sha256` para instalar em outros Macs Intel. Os `.dmg` são ignorados pelo git (~145 MB) e publicados em GitHub Releases: https://github.com/ispaiva/hermes-desktop-intel/releases (tag = versão do app desktop, ex. `v0.17.6`; `gh release create vX.Y.Z dist/*.dmg dist/*.sha256`).
+- `build-dmg.sh` — assina (ad-hoc) o app compilado e gera `dist/Hermes-<versão>-mac-x64.dmg` + `.sha256` para instalar em outros Macs Intel. Os `.dmg` são ignorados pelo git (~145 MB) e publicados em GitHub Releases: https://github.com/ispaiva/hermes-desktop-intel/releases (tag = versão do app desktop, ex. `v2026.10.3`; `gh release create vX.Y.Z dist/*.dmg dist/*.sha256`).
 - `hermes-agent/` — symlink para `~/.hermes/hermes-agent`, o checkout real de `NousResearch/hermes-agent` (branch `main`, `--depth 1`).
 
 **Nunca** apontar `HERMES_INSTALL_DIR` para este diretório: o instalador faz `rm -rf "$INSTALL_DIR"` quando um clone falha.
@@ -59,8 +59,10 @@ O `npm ci` **tem** de rodar na raiz do repo (workspaces); `scripts/assert-root-i
 
 ## Armadilhas conhecidas
 
-- `npm run dist:*` com `CSC_IDENTITY_AUTO_DISCOVERY=false` pula até a assinatura ad-hoc; o app resultante em `release/mac/` e no DMG fica não assinado. `build-dmg.sh` resolve aplicando `_desktop_macos_relaunchable_fixup` e empacotando com `--prepackaged <caminho do .app>` (passar `release/mac` coloca a pasta inteira no DMG). Não repetir `--publish never` — o wrapper `run-electron-builder.mjs` já o adiciona e a duplicata causa erro de `GH_TOKEN`.
-- A versão do app desktop (`apps/desktop/package.json`, ex. 0.17.6) é independente da do agente Python (`hermes --version`, ex. 0.21.3).
+- `npm run dist:*` com `CSC_IDENTITY_AUTO_DISCOVERY=false` pula até a assinatura ad-hoc; o app resultante em `release/mac/` e no DMG fica não assinado. O wrapper `run-electron-builder.mjs` (fluxo "prepared packaging") também não aceita mais `--prepackaged`. `build-dmg.sh` resolve aplicando `_desktop_macos_relaunchable_fixup` e gerando o DMG com `hdiutil` (app + symlink `/Applications`).
+- Versão do desktop: desde ~2026-09-26 o `apps/desktop/package.json` fica em `0.0.0` e o CI upstream injeta a versão da release (tag sem `v`, ex. `2026.9.24`) via `-c.extraMetadata.version`. `build-intel.sh --rebuild` injeta a data do commit do checkout (`YYYY.M.D`); `build-dmg.sh` lê a versão do `Info.plist` do app. Releases antigas (≤ 0.17.6) usavam o semver do package.json.
+- `venv/bin/python` agora é um launcher binário (Python 3.14) que não aceita script via stdin (`python -`); usar `python -c`. O dmgbuild/scripts de build upstream exigem `HERMES_PYTHON`.
+- `hermes update` falhou com `CERTIFICATE_VERIFY_FAILED` ao baixar o Python 3.14 (o Python 3.12 do python.org não tem CAs instalados). Contorno: `SSL_CERT_FILE=~/.hermes/hermes-agent/venv/lib/python3.12/site-packages/certifi/cacert.pem hermes update` (ou rodar `Install Certificates.command` do Python 3.12).
 
 - Dependências de voz/wake-word (`onnxruntime`, `faster-whisper`) falharam na resolução do uv em x86_64-macOS no install de 2026-09-21 (não-fatal; o agente tenta lazy-install no primeiro uso da voz). Voz pode não funcionar neste Mac.
 

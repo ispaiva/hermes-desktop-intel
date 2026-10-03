@@ -18,17 +18,20 @@ if [ "$1" = "--rebuild" ]; then
     [ -d "$DESKTOP_DIR" ] || { echo "Checkout não encontrado em $INSTALL_DIR — rode sem --rebuild." >&2; exit 1; }
     export PATH="$HOME/.hermes/node/bin:$PATH"
     cd "$INSTALL_DIR" && npm ci --include=optional
-    cd "$DESKTOP_DIR" && CSC_IDENTITY_AUTO_DISCOVERY=false npm run pack
+    # O package.json do desktop fica em 0.0.0; o CI upstream injeta a versão da
+    # release (tag sem "v", ex. 2026.9.24). Aqui usamos a data do commit do checkout.
+    VERSION=$(git -C "$INSTALL_DIR" log -1 --format=%cd --date=format:'%Y.%-m.%-d')
+    cd "$DESKTOP_DIR" && CSC_IDENTITY_AUTO_DISCOVERY=false npm run pack -- "-c.extraMetadata.version=$VERSION"
     APP="$DESKTOP_DIR/release/mac/Hermes.app"
 
     # `npm run pack` deixa o app sem assinatura; aplicar o mesmo fixup ad-hoc
     # que o instalador usa (identidade estável -> permissões TCC persistem).
-    (cd "$INSTALL_DIR" && HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}" venv/bin/python - "$DESKTOP_DIR" <<'PYEOF'
+    (cd "$INSTALL_DIR" && HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}" venv/bin/python -c '
 import sys
 from pathlib import Path
 from hermes_cli.main import _desktop_macos_relaunchable_fixup
 sys.exit(0 if _desktop_macos_relaunchable_fixup(Path(sys.argv[1]), publisher_signing_configured=False) else 1)
-PYEOF
+' "$DESKTOP_DIR"
     )
     codesign --verify --deep --strict "$APP"
 
@@ -40,7 +43,7 @@ PYEOF
     fi
     rm -rf /Applications/Hermes.app
     cp -R "$APP" /Applications/
-    echo "App: $APP"
+    echo "App: $APP (versão $VERSION)"
     echo "Copiado para /Applications/Hermes.app"
     exit 0
 fi
